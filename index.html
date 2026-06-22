@@ -52,6 +52,42 @@
             font-size: 0.85rem;
             font-weight: bold;
             border-bottom: 2px solid var(--giallo-pantone);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header .title {
+            flex: 1;
+            text-align: center;
+        }
+
+        .chat-header .clear-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, opacity 0.2s;
+            opacity: 0.7;
+        }
+
+        .chat-header .clear-btn:hover {
+            opacity: 1;
+            transform: scale(1.15);
+        }
+
+        .chat-header .clear-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--giallo-pantone);
+            transition: fill 0.2s;
+        }
+
+        .chat-header .clear-btn:hover svg {
+            fill: var(--rosso-stop);
         }
 
         .chat-messages {
@@ -62,6 +98,7 @@
             flex-direction: column;
             gap: 4px;
             background: var(--bianco);
+            min-height: 120px;
         }
 
         .message {
@@ -205,18 +242,24 @@
         }
     </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
     <div class="chat-container">
         <div class="chat-header">
-            🤖 Formula AI Agent Query
+            <span class="title">🤖 Formula AI Agent Query</span>
+            <button class="clear-btn" onclick="clearChat()" title="Svuota la chat">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15.5 4l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v2H8V9z"/>
+                </svg>
+            </button>
         </div>
-        
+
         <div class="chat-messages" id="chatMessages">
-            <div class="message bot">Ciao! Mi faccio in DUE per te. Come posso aiutarti?</div>
+            <div class="message bot" id="welcome-msg">Ciao! Mi faccio in DUE per te. Come posso aiutarti?</div>
         </div>
-        
+
         <div class="chat-input-area">
             <input 
                 type="text" 
@@ -260,9 +303,30 @@
             }
         }
 
+        function clearChat() {
+            // Se c'è una generazione in corso, la interrompe prima
+            if (isGenerating) {
+                stopGeneration();
+            }
+            // Rimuove tutti i messaggi
+            chatMessages.innerHTML = '';
+            // Ri-aggiunge il messaggio di benvenuto
+            const welcome = document.createElement('div');
+            welcome.className = 'message bot';
+            welcome.id = 'welcome-msg';
+            welcome.textContent = 'Ciao! Mi faccio in DUE per te. Come posso aiutarti?';
+            chatMessages.appendChild(welcome);
+            // Riporta il focus sull'input
+            userInput.focus();
+        }
+
         async function sendMessage() {
             const message = userInput.value.trim();
             if (!message) return;
+
+            // Rimuove il messaggio di benvenuto se presente
+            const welcomeMsg = document.getElementById('welcome-msg');
+            if (welcomeMsg) welcomeMsg.remove();
 
             // Disabilita input e mostra stop
             userInput.value = '';
@@ -299,16 +363,16 @@
                 }
 
                 const data = await response.json();
-                
+
                 // Rimuovi caricamento e mostra risposta
                 removeMessage(loadingId);
                 addMessage(data.response, 'bot');
 
             } catch (error) {
                 removeMessage(loadingId);
-                
+
                 if (error.name === 'AbortError') {
-                    addMessage('⏹ Generazione interrotta dall\'utente.', 'stopped');
+                    addMessage('⏹ Generazione interrotta dall'utente.', 'stopped');
                 } else {
                     addMessage('❌ Errore: ' + error.message, 'error-msg');
                     console.error(error);

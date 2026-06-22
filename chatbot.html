@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot LLM Locale</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --giallo-pantone: #FFDA00;
+            --nero: #000000;
+            --bianco: #FFFFFF;
+            --grigio-chiaro: #F5F5F5;
+            --grigio-medio: #E0E0E0;
+            --grigio-scuro: #666666;
+            --rosso-stop: #E53935;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bianco);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: var(--bianco);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--grigio-medio);
+        }
+
+        .chat-header {
+            background: var(--nero);
+            padding: 20px;
+            text-align: center;
+            color: var(--giallo-pantone);
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-bottom: 3px solid var(--giallo-pantone);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: var(--bianco);
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--giallo-pantone);
+            color: var(--nero);
+            border-bottom-right-radius: 5px;
+            font-weight: 500;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: var(--grigio-chiaro);
+            color: var(--nero);
+            border-bottom-left-radius: 5px;
+            border: 1px solid var(--grigio-medio);
+        }
+
+        .message.loading {
+            background: var(--grigio-chiaro);
+            color: var(--grigio-scuro);
+            font-style: italic;
+        }
+
+        .message.stopped {
+            background: #FFEBEE;
+            color: var(--rosso-stop);
+            font-style: italic;
+            border: 1px solid var(--rosso-stop);
+        }
+
+        .message.error-msg {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #EF9A9A;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: var(--nero);
+            display: flex;
+            gap: 10px;
+            border-top: 3px solid var(--giallo-pantone);
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid var(--grigio-medio);
+            border-radius: 30px;
+            background: var(--bianco);
+            color: var(--nero);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #userInput:focus {
+            border-color: var(--giallo-pantone);
+        }
+
+        #userInput::placeholder {
+            color: var(--grigio-scuro);
+        }
+
+        #userInput:disabled {
+            background: var(--grigio-chiaro);
+            color: var(--grigio-scuro);
+        }
+
+        #sendBtn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            background: var(--giallo-pantone);
+            color: var(--nero);
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+            min-width: 100px;
+        }
+
+        #sendBtn:hover {
+            background: #FFE44D;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 218, 0, 0.4);
+        }
+
+        #sendBtn:disabled {
+            background: var(--grigio-medio);
+            color: var(--grigio-scuro);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #sendBtn.stop-btn {
+            background: var(--rosso-stop);
+            color: var(--bianco);
+            min-width: 60px;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+        }
+
+        #sendBtn.stop-btn:hover {
+            background: #EF5350;
+        }
+
+        /* Scrollbar personalizzata */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--grigio-chiaro);
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--nero);
+            border-radius: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--giallo-pantone);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            🤖 Formula AI Agent Query
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">Ciao! Mi faccio in DUE per te. Come posso aiutarti?</div>
+        </div>
+        
+        <div class="chat-input-area">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Scrivi un messaggio..." 
+                autocomplete="off"
+            >
+            <button id="sendBtn" onclick="handleButtonClick()">Invia</button>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAZIONE
+        const OLLAMA_URL = 'http://localhost:11434/api/generate';
+        const MODEL = 'qwen2.5:7b';
+
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        let abortController = null;
+        let isGenerating = false;
+
+        // Invio con tasto Enter
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !isGenerating) sendMessage();
+        });
+
+        function handleButtonClick() {
+            if (isGenerating) {
+                stopGeneration();
+            } else {
+                sendMessage();
+            }
+        }
+
+        function stopGeneration() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Disabilita input e mostra stop
+            userInput.value = '';
+            userInput.disabled = true;
+            isGenerating = true;
+            sendBtn.textContent = '⏹';
+            sendBtn.classList.add('stop-btn');
+
+            // Mostra messaggio utente
+            addMessage(message, 'user');
+
+            // Mostra indicatore di caricamento
+            const loadingId = addMessage('Sto pensando...', 'loading');
+
+            // Crea AbortController per poter interrompere
+            abortController = new AbortController();
+
+            try {
+                const response = await fetch(OLLAMA_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    signal: abortController.signal,
+                    body: JSON.stringify({
+                        model: MODEL,
+                        prompt: message,
+                        stream: false
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Errore di connessione con Ollama');
+                }
+
+                const data = await response.json();
+                
+                // Rimuovi caricamento e mostra risposta
+                removeMessage(loadingId);
+                addMessage(data.response, 'bot');
+
+            } catch (error) {
+                removeMessage(loadingId);
+                
+                if (error.name === 'AbortError') {
+                    addMessage('⏹ Generazione interrotta dall\'utente.', 'stopped');
+                } else {
+                    addMessage('❌ Errore: ' + error.message, 'error-msg');
+                    console.error(error);
+                }
+            } finally {
+                // Riabilita input
+                isGenerating = false;
+                abortController = null;
+                userInput.disabled = false;
+                sendBtn.textContent = 'Invia';
+                sendBtn.classList.remove('stop-btn');
+                userInput.focus();
+            }
+        }
+
+        function addMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = text;
+            div.id = 'msg-' + Date.now();
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return div.id;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+    </script>
+
+</body>
+</html>
